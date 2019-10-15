@@ -26,12 +26,19 @@ void wait_response(server_conn &conn) {
              });
 }
 
-server_conn connect_to_server(boost::asio::io_context &io_context) {
+bool finalized = false;
+void finalize() { finalized = true; }
+
+boost::asio::io_context ctx;
+boost::asio::io_context &get_ctx() { return ctx; }
+void run() { ctx.run(); }
+
+server_conn connect_to_server() {
   boost::log::core::get()->set_filter(boost::log::trivial::severity >=
                                       boost::log::trivial::warning);
   using namespace boost::asio;
   local::stream_protocol::endpoint ep("/var/run/khtcp.sock");
-  server_conn sock(io_context);
+  server_conn sock(ctx);
   sock.connect(ep);
   // init the random generator
   srand((unsigned)time(nullptr));

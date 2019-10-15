@@ -16,8 +16,7 @@ int main() {
       "occaecat cupidatat non proident, sunt in culpa qui officia deserunt "
       "mollit anim id est laborum.";
 
-  boost::asio::io_context ctx;
-  auto conn = khtcpc::mgmt::connect_to_server(ctx);
+  auto conn = khtcpc::mgmt::connect_to_server();
   int dev = khtcpc::mgmt::find_device(conn, "eth0");
   struct sockaddr_ll mac;
   memcpy(&mac.sll_addr, "\xff\xff\xff\xff\xff\xff", 6);
@@ -49,7 +48,9 @@ int main() {
             std::cout << ' ';
           }
         }
+        std::cout << std::endl;
+        khtcpc::mgmt::finalize();
       });
 
-  ctx.run();
+  khtcpc::mgmt::run();
 }

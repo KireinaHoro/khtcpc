@@ -57,6 +57,8 @@ void timer_handler(const boost::system::error_code &ec, server_conn &conn,
       t.async_wait(boost::bind(timer_handler, placeholders::error,
                                boost::ref(conn), boost::ref(t),
                                boost::ref(counter), dev));
+    } else {
+      mgmt::finalize();
     }
   } else {
     fprintf(stderr, "timer: %s\n", ec.message().c_str());
@@ -90,8 +92,7 @@ int main(int argc, char **argv) {
   memcpy(&dst_mac->sll_addr, "\xff\xff\xff\xff\xff\xff", 6);
   dst_mac->sll_halen = 6;
 
-  io_context ctx;
-  auto conn = mgmt::connect_to_server(ctx);
+  auto conn = mgmt::connect_to_server();
   int dev = mgmt::find_device(conn, argv[1]);
   if (dev < 0) {
     fprintf(stderr, "failed to find interface %s.\n", argv[1]);
@@ -115,12 +116,12 @@ int main(int argc, char **argv) {
 
   int counter = 1;
   req_once(conn, dev);
-  deadline_timer t(ctx);
+  deadline_timer t(mgmt::get_ctx());
   if (count > 1) {
     t.expires_from_now(boost::posix_time::seconds(1));
     t.async_wait(boost::bind(timer_handler, placeholders::error,
                              boost::ref(conn), boost::ref(t),
                              boost::ref(counter), dev));
   }
-  ctx.run();
+  mgmt::run();
 }
