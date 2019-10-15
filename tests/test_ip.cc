@@ -44,10 +44,9 @@ int main() {
 
   // test read TCP
   khtcpc::ip::async_read(
-      conn, dev, 6,
+      conn, 6,
       [&](const struct khtcpc::response *resp_ptr, const void *payload_ptr) {
         BOOST_ASSERT(payload_ptr);
-        BOOST_ASSERT(resp_ptr->ip_read.dev_id == dev);
         char ip_str[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &resp_ptr->ip_read.src.sin_addr, ip_str,
                   INET_ADDRSTRLEN);
@@ -75,11 +74,10 @@ int main() {
       });
 
   khtcpc::ip::async_write(
-      conn, dev, 78, *src, dst, 0, 255,
+      conn, 78, *src, dst, 0, 255,
       boost::asio::buffer(payload, strlen(payload)),
       [&](const struct khtcpc::response *resp_ptr, const void *payload_ptr) {
         BOOST_ASSERT(!payload_ptr);
-        BOOST_ASSERT(resp_ptr->ip_write.dev_id == dev);
         if (resp_ptr->ip_write.ret < 0) {
           std::cerr << "Failed to write IP packet: Errno "
                     << resp_ptr->ip_write.ret;

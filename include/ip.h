@@ -21,7 +21,7 @@
 namespace khtcpc {
 namespace ip {
 template <typename MutableBufferSequence>
-void async_write(server_conn &sock, int dev_id, uint8_t proto,
+void async_write(server_conn &sock, uint8_t proto,
                  const struct sockaddr_in &src, const struct sockaddr_in &dst,
                  uint8_t dscp, uint8_t ttl,
                  const MutableBufferSequence &payload_buf, handler_t &&handler,
@@ -32,7 +32,6 @@ void async_write(server_conn &sock, int dev_id, uint8_t proto,
   req.id = rand();
   req.payload_len = payload_buf.size();
 
-  req.ip_write.dev_id = dev_id;
   req.ip_write.proto = proto;
   req.ip_write.dscp = dscp;
   req.ip_write.ttl = ttl;
@@ -45,8 +44,7 @@ void async_write(server_conn &sock, int dev_id, uint8_t proto,
   mgmt::wait_response(sock);
 }
 
-void async_read(server_conn &sock, int dev_id, uint8_t proto,
-                handler_t &&handler);
+void async_read(server_conn &sock, uint8_t proto, handler_t &&handler);
 } // namespace ip
 } // namespace khtcpc
 
