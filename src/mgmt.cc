@@ -4,6 +4,9 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
 #include <cstdlib>
+#include <functional>
+#include <queue>
+#include <utility>
 
 #include "mgmt.h"
 
@@ -15,15 +18,24 @@ pending_map &get_pending_map() {
   return map;
 }
 
+std::queue<
+    std::pair<struct response *,
+              std::function<void(const boost::system::error_code &, size_t)>>>
+    read_response_handlers;
+
 void wait_response(server_conn &conn) {
   using namespace boost::asio;
   struct response *response_ =
       (struct response *)malloc(sizeof(struct response));
-  async_read(conn, buffer(response_, sizeof(*response_)),
-             [&, response_](const auto &ec, auto bytes) {
-               read_response_handler(ec, bytes, conn, *response_);
-               free(response_);
-             });
+  read_response_handlers.emplace(response_, [&, response_](const auto &ec,
+                                                           auto bytes) {
+    if (!ec) {
+      read_response_handler(ec, bytes, conn, *response_);
+      free(response_);
+    } else {
+      BOOST_LOG_TRIVIAL(error) << "Error in read response: " << ec.message();
+    }
+  });
 }
 
 bool finalized = false;
@@ -42,6 +54,24 @@ server_conn connect_to_server() {
   sock.connect(ep);
   // init the random generator
   srand((unsigned)time(nullptr));
+
+  // start the response handler processing loop
+  static boost::asio::deadline_timer t(ctx);
+  static std::function<void()> token = [&sock]() {
+    if (!read_response_handlers.empty()) {
+      auto &head = read_response_handlers.front();
+      async_read(sock, boost::asio::buffer(head.first, sizeof(struct response)),
+                 [&](const auto &ec, auto bytes) {
+                   head.second(ec, bytes);
+                   read_response_handlers.pop();
+                   boost::asio::post(ctx, token);
+                 });
+    } else if (!finalized) {
+      t.expires_from_now(boost::posix_time::millisec(1));
+      t.async_wait([&](const auto &ec) { boost::asio::post(ctx, token); });
+    }
+  };
+  boost::asio::post(ctx, token);
 
   return sock;
 }
