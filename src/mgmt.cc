@@ -44,11 +44,15 @@ void read_response_handler(const boost::system::error_code &ec, int bytes,
   using namespace boost::asio;
   try {
     void *payload_ptr = nullptr;
+    auto &handler = get_pending_map().at(response_.id);
     if (response_.payload_len > 0) {
       payload_ptr = malloc(response_.payload_len);
-      read(sock, buffer(payload_ptr, response_.payload_len));
+      if (response_.payload_len !=
+          read(sock, buffer(payload_ptr, response_.payload_len))) {
+        BOOST_LOG_TRIVIAL(warning) << "Response payload short read";
+      }
     }
-    get_pending_map().at(response_.id)(&response_, payload_ptr);
+    handler(&response_, payload_ptr);
     BOOST_LOG_TRIVIAL(trace) << "Called handler for request " << response_.id;
     get_pending_map().erase(response_.id);
     if (payload_ptr) {
