@@ -49,7 +49,8 @@ server_conn connect_to_server() {
   boost::log::core::get()->set_filter(boost::log::trivial::severity >=
                                       boost::log::trivial::warning);
   using namespace boost::asio;
-  local::stream_protocol::endpoint ep("/var/run/khtcp.sock");
+  using namespace std::string_literals;
+  local::stream_protocol::endpoint ep("\0khtcp-server"s);
   server_conn sock(ctx);
   sock.connect(ep);
   // init the random generator
