@@ -122,6 +122,8 @@ int main(int argc, char **argv) {
     t.async_wait(boost::bind(timer_handler, placeholders::error,
                              boost::ref(conn), boost::ref(t),
                              boost::ref(counter), dev));
+  } else {
+    mgmt::finalize();
   }
   mgmt::run();
 }

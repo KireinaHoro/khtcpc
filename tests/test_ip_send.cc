@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
         BOOST_ASSERT(!payload_ptr);
         if (resp_ptr->ip_write.ret) {
           std::cerr << "Failed to write IP packet: Errno "
-                    << resp_ptr->ip_write.ret;
+                    << resp_ptr->ip_write.ret << std::endl;
         } else {
           std::cout << "IP packet written." << std::endl;
         }
