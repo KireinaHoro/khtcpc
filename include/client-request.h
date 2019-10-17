@@ -32,6 +32,12 @@ enum request_type {
 
   IP_READ,
   IP_WRITE,
+
+  SOCKET,
+  CLOSE,
+  BIND,
+  SENDTO,
+  RECVFROM,
 };
 
 struct request {
@@ -80,6 +86,25 @@ struct request {
       uint8_t dscp;
       uint8_t ttl;
     } ip_write;
+
+    struct {
+      int type;
+    } socket;
+    struct {
+      int fd;
+    } close;
+    struct {
+      int fd;
+      struct sockaddr_in addr;
+    } bind;
+    struct {
+      int fd;
+      struct sockaddr_in dst;
+    } sendto;
+    struct {
+      int fd;
+      struct sockaddr_in src;
+    } recvfrom;
   };
 };
 
@@ -126,6 +151,22 @@ struct response {
     struct {
       int ret;
     } ip_write;
+
+    struct {
+      int fd;
+    } socket;
+    struct {
+      int ret;
+    } close;
+    struct {
+      int ret;
+    } bind;
+    struct {
+      ssize_t ret;
+    } sendto;
+    struct {
+      ssize_t ret;
+    } recvfrom;
   };
 };
 
