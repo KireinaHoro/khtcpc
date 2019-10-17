@@ -30,6 +30,10 @@ int main() {
       "Sapien et ligula ullamcorper malesuada proin libero nunc.";
   boost::asio::io_context ctx;
   int dev = khtcpc::mgmt::find_device("eth0");
+  if (dev < 0) {
+    std::cerr << "Device eth0 not found" << std::endl;
+    exit(-1);
+  }
 
   int num_ip;
   auto src = khtcpc::mgmt::get_device_ip(dev, &num_ip);

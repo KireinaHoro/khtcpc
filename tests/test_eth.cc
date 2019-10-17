@@ -17,6 +17,10 @@ int main() {
       "mollit anim id est laborum.";
 
   int dev = khtcpc::mgmt::find_device("eth0");
+  if (dev < 0) {
+    std::cerr << "Device eth0 not found" << std::endl;
+    exit(-1);
+  }
   struct sockaddr_ll mac;
   memcpy(&mac.sll_addr, "\xff\xff\xff\xff\xff\xff", 6);
   mac.sll_halen = 6;
