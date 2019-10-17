@@ -24,20 +24,21 @@ template <typename MutableBufferSequence>
 void async_write(int dev_id, uint16_t ethertype, const struct sockaddr_ll &mac,
                  const MutableBufferSequence &payload_buf, handler_t &&handler,
                  check_buffer<MutableBufferSequence> = 0) {
-  static struct request req;
-  static struct response resp;
-  req.type = ETHERNET_WRITE;
-  req.id = rand();
-  req.payload_len = payload_buf.size();
+  auto *req = (struct request *)malloc(sizeof(struct request));
+  auto *resp = (struct response *)malloc(sizeof(struct response));
+  req->type = ETHERNET_WRITE;
+  req->id = rand();
+  req->payload_len = payload_buf.size();
 
-  req.eth_write.dev_id = dev_id;
-  req.eth_write.ethertype = ethertype;
-  memcpy(&req.eth_write.mac, &mac, sizeof(mac));
+  req->eth_write.dev_id = dev_id;
+  req->eth_write.ethertype = ethertype;
+  memcpy(&req->eth_write.mac, &mac, sizeof(mac));
 
-  boost::asio::write(mgmt::get_conn(), boost::asio::buffer(&req, sizeof(req)));
+  boost::asio::write(mgmt::get_conn(),
+                     boost::asio::buffer(req, sizeof(struct request)));
   boost::asio::write(mgmt::get_conn(), payload_buf);
-  mgmt::get_pending_map()[req.id] = std::move(handler);
-  mgmt::wait_response();
+  mgmt::get_pending_map()[req->id] = std::move(handler);
+  mgmt::wait_response(req, resp);
 }
 
 void async_read(int dev_id, handler_t &&handler);

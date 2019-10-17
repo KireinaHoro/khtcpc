@@ -23,7 +23,7 @@ namespace mgmt {
 
 pending_map &get_pending_map();
 
-void wait_response();
+void wait_response(void *req, void *resp);
 
 void read_response_handler(const boost::system::error_code &ec, int bytes,
                            struct response &response_);

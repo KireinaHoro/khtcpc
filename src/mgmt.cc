@@ -23,19 +23,19 @@ std::queue<
               std::function<void(const boost::system::error_code &, size_t)>>>
     read_response_handlers;
 
-void wait_response() {
+void wait_response(void *req, void *resp) {
   using namespace boost::asio;
-  struct response *response_ =
-      (struct response *)malloc(sizeof(struct response));
-  read_response_handlers.emplace(response_, [&, response_](const auto &ec,
-                                                           auto bytes) {
-    if (!ec) {
-      read_response_handler(ec, bytes, *response_);
-      free(response_);
-    } else {
-      BOOST_LOG_TRIVIAL(error) << "Error in read response: " << ec.message();
-    }
-  });
+  read_response_handlers.emplace(
+      (struct response *)resp, [&, req, resp](const auto &ec, auto bytes) {
+        if (!ec) {
+          read_response_handler(ec, bytes, *(struct response *)resp);
+          free(req);
+          free(resp);
+        } else {
+          BOOST_LOG_TRIVIAL(error)
+              << "Error in read response: " << ec.message();
+        }
+      });
 }
 
 bool finalized = false;
