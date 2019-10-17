@@ -37,8 +37,7 @@ void async_write(int dev_id, uint16_t ethertype, const struct sockaddr_ll &mac,
   boost::asio::write(mgmt::get_conn(),
                      boost::asio::buffer(req, sizeof(struct request)));
   boost::asio::write(mgmt::get_conn(), payload_buf);
-  mgmt::get_pending_map()[req->id] = std::move(handler);
-  mgmt::wait_response(req, resp);
+  mgmt::wait_response(req, resp, std::move(handler));
 }
 
 void async_read(int dev_id, handler_t &&handler);

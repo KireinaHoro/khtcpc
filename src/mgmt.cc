@@ -5,6 +5,7 @@
 #include <boost/log/trivial.hpp>
 #include <cstdlib>
 #include <functional>
+#include <iomanip>
 #include <queue>
 #include <utility>
 
@@ -23,14 +24,22 @@ std::queue<
               std::function<void(const boost::system::error_code &, size_t)>>>
     read_response_handlers;
 
-void wait_response(void *req, void *resp) {
+void wait_response(struct request *req, struct response *resp,
+                   handler_t &&handler) {
   using namespace boost::asio;
+  mgmt::get_pending_map().emplace(
+      req->id, [req, handler](const response *resp, const void *payload_ptr) {
+        handler(resp, payload_ptr);
+        BOOST_LOG_TRIVIAL(trace) << "Called handler for request " << resp->id;
+        // note the order of free carefully
+        free(req);
+        get_pending_map().erase(resp->id);
+        free((void *)resp);
+      });
   read_response_handlers.emplace(
       (struct response *)resp, [&, req, resp](const auto &ec, auto bytes) {
         if (!ec) {
           read_response_handler(ec, bytes, *(struct response *)resp);
-          free(req);
-          free(resp);
         } else {
           BOOST_LOG_TRIVIAL(error)
               << "Error in read response: " << ec.message();
@@ -98,8 +107,6 @@ void read_response_handler(const boost::system::error_code &ec, int bytes,
       }
     }
     handler(&response_, payload_ptr);
-    BOOST_LOG_TRIVIAL(trace) << "Called handler for request " << response_.id;
-    get_pending_map().erase(response_.id);
     if (payload_ptr) {
       free(payload_ptr);
     }

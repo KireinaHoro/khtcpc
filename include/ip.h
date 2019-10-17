@@ -40,8 +40,7 @@ void async_write(uint8_t proto, const struct sockaddr_in &src,
   boost::asio::write(mgmt::get_conn(),
                      boost::asio::buffer(req, sizeof(struct request)));
   boost::asio::write(mgmt::get_conn(), payload_buf);
-  mgmt::get_pending_map()[req->id] = std::move(handler);
-  mgmt::wait_response(req, resp);
+  mgmt::wait_response(req, resp, std::move(handler));
 }
 
 void async_read(uint8_t proto, handler_t &&handler);
