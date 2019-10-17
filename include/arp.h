@@ -19,11 +19,10 @@
 
 namespace khtcpc {
 namespace arp {
-void async_write(server_conn &sock, int dev_id, int opcode,
-                 struct sockaddr_ll &sender_mac, struct sockaddr_in &sender_ip,
-                 struct sockaddr_ll &target_mac, struct sockaddr_in &target_ip,
-                 handler_t &&handler);
-void async_read(server_conn &sock, int dev_id, handler_t &&handler);
+void async_write(int dev_id, int opcode, struct sockaddr_ll &sender_mac,
+                 struct sockaddr_in &sender_ip, struct sockaddr_ll &target_mac,
+                 struct sockaddr_in &target_ip, handler_t &&handler);
+void async_read(int dev_id, handler_t &&handler);
 } // namespace arp
 } // namespace khtcpc
 

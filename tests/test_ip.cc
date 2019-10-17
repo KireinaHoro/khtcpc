@@ -29,11 +29,10 @@ int main() {
       "nisl. Vulputate dignissim suspendisse in est ante in nibh mauris. "
       "Sapien et ligula ullamcorper malesuada proin libero nunc.";
   boost::asio::io_context ctx;
-  auto conn = khtcpc::mgmt::connect_to_server();
-  int dev = khtcpc::mgmt::find_device(conn, "eth0");
+  int dev = khtcpc::mgmt::find_device("eth0");
 
   int num_ip;
-  auto src = khtcpc::mgmt::get_device_ip(conn, dev, &num_ip);
+  auto src = khtcpc::mgmt::get_device_ip(dev, &num_ip);
   if (num_ip < 1) {
     fprintf(stderr, "interface eth0 does not have IP address.\n");
     return -1;
@@ -43,39 +42,36 @@ int main() {
   dst.sin_family = AF_INET;
 
   // test read TCP
-  khtcpc::ip::async_read(
-      conn, 6,
-      [&](const struct khtcpc::response *resp_ptr, const void *payload_ptr) {
-        BOOST_ASSERT(payload_ptr);
-        char ip_str[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &resp_ptr->ip_read.src.sin_addr, ip_str,
-                  INET_ADDRSTRLEN);
-        std::cout << "IP " << ip_str << " > ";
-        inet_ntop(AF_INET, &resp_ptr->ip_read.dst.sin_addr, ip_str,
-                  INET_ADDRSTRLEN);
-        std::cout << ip_str << ", dscp " << (int)resp_ptr->ip_read.dscp
-                  << std::endl;
-        std::cout << "IP payload length " << resp_ptr->payload_len
-                  << ", content: " << std::endl;
-        for (int i = 0; i < resp_ptr->payload_len; ++i) {
-          if (i % 16 == 0) {
-            std::cout << std::hex << std::setw(8) << std::setfill('0') << i
-                      << ": ";
-          }
-          std::cout << std::hex << std::setw(2) << std::setfill('0')
-                    << (int)((const uint8_t *)payload_ptr)[i];
-          if (i % 16 == 15) {
-            std::cout << std::endl;
-          } else if (i % 2 == 1) {
-            std::cout << ' ';
-          }
-        }
+  khtcpc::ip::async_read(6, [&](const struct khtcpc::response *resp_ptr,
+                                const void *payload_ptr) {
+    BOOST_ASSERT(payload_ptr);
+    char ip_str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &resp_ptr->ip_read.src.sin_addr, ip_str,
+              INET_ADDRSTRLEN);
+    std::cout << "IP " << ip_str << " > ";
+    inet_ntop(AF_INET, &resp_ptr->ip_read.dst.sin_addr, ip_str,
+              INET_ADDRSTRLEN);
+    std::cout << ip_str << ", dscp " << (int)resp_ptr->ip_read.dscp
+              << std::endl;
+    std::cout << "IP payload length " << resp_ptr->payload_len
+              << ", content: " << std::endl;
+    for (int i = 0; i < resp_ptr->payload_len; ++i) {
+      if (i % 16 == 0) {
+        std::cout << std::hex << std::setw(8) << std::setfill('0') << i << ": ";
+      }
+      std::cout << std::hex << std::setw(2) << std::setfill('0')
+                << (int)((const uint8_t *)payload_ptr)[i];
+      if (i % 16 == 15) {
         std::cout << std::endl;
-      });
+      } else if (i % 2 == 1) {
+        std::cout << ' ';
+      }
+    }
+    std::cout << std::endl;
+  });
 
   khtcpc::ip::async_write(
-      conn, 78, *src, dst, 0, 255,
-      boost::asio::buffer(payload, strlen(payload)),
+      78, *src, dst, 0, 255, boost::asio::buffer(payload, strlen(payload)),
       [&](const struct khtcpc::response *resp_ptr, const void *payload_ptr) {
         BOOST_ASSERT(!payload_ptr);
         if (resp_ptr->ip_write.ret < 0) {

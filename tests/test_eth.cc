@@ -16,41 +16,38 @@ int main() {
       "occaecat cupidatat non proident, sunt in culpa qui officia deserunt "
       "mollit anim id est laborum.";
 
-  auto conn = khtcpc::mgmt::connect_to_server();
-  int dev = khtcpc::mgmt::find_device(conn, "eth0");
+  int dev = khtcpc::mgmt::find_device("eth0");
   struct sockaddr_ll mac;
   memcpy(&mac.sll_addr, "\xff\xff\xff\xff\xff\xff", 6);
   mac.sll_halen = 6;
 
   khtcpc::eth::async_write(
-      conn, dev, 0xdead, mac, boost::asio::buffer(payload, strlen(payload)),
+      dev, 0xdead, mac, boost::asio::buffer(payload, strlen(payload)),
       [&](const struct khtcpc::response *resp_ptr, const void *payload_ptr) {
         BOOST_ASSERT(!payload_ptr);
         BOOST_ASSERT(resp_ptr->eth_write.dev_id == dev);
         std::cout << "Frame written." << std::endl;
       });
 
-  khtcpc::eth::async_read(
-      conn, dev,
-      [&](const struct khtcpc::response *resp_ptr, const void *payload_ptr) {
-        BOOST_ASSERT(payload_ptr);
-        BOOST_ASSERT(resp_ptr->eth_read.dev_id == dev);
-        std::cout << "Frame EtherType: 0x" << std::hex << std::setw(4)
-                  << std::setfill('0') << resp_ptr->eth_read.ethertype
-                  << std::endl;
-        std::cout << "Frame content: " << std::endl;
-        for (int i = 0; i < resp_ptr->payload_len; ++i) {
-          std::cout << std::hex << std::setw(2) << std::setfill('0')
-                    << (int)((const uint8_t *)payload_ptr)[i];
-          if (i % 16 == 15) {
-            std::cout << std::endl;
-          } else if (i % 2 == 1) {
-            std::cout << ' ';
-          }
-        }
+  khtcpc::eth::async_read(dev, [&](const struct khtcpc::response *resp_ptr,
+                                   const void *payload_ptr) {
+    BOOST_ASSERT(payload_ptr);
+    BOOST_ASSERT(resp_ptr->eth_read.dev_id == dev);
+    std::cout << "Frame EtherType: 0x" << std::hex << std::setw(4)
+              << std::setfill('0') << resp_ptr->eth_read.ethertype << std::endl;
+    std::cout << "Frame content: " << std::endl;
+    for (int i = 0; i < resp_ptr->payload_len; ++i) {
+      std::cout << std::hex << std::setw(2) << std::setfill('0')
+                << (int)((const uint8_t *)payload_ptr)[i];
+      if (i % 16 == 15) {
         std::cout << std::endl;
-        khtcpc::mgmt::finalize();
-      });
+      } else if (i % 2 == 1) {
+        std::cout << ' ';
+      }
+    }
+    std::cout << std::endl;
+    khtcpc::mgmt::finalize();
+  });
 
   khtcpc::mgmt::run();
 }

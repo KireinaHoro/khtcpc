@@ -6,10 +6,9 @@
 namespace khtcpc {
 namespace arp {
 using namespace boost::asio;
-void async_write(server_conn &sock, int dev_id, int opcode,
-                 struct sockaddr_ll &sender_mac, struct sockaddr_in &sender_ip,
-                 struct sockaddr_ll &target_mac, struct sockaddr_in &target_ip,
-                 handler_t &&handler) {
+void async_write(int dev_id, int opcode, struct sockaddr_ll &sender_mac,
+                 struct sockaddr_in &sender_ip, struct sockaddr_ll &target_mac,
+                 struct sockaddr_in &target_ip, handler_t &&handler) {
   static struct request req;
   static struct response resp;
   req.type = ARP_WRITE;
@@ -25,12 +24,12 @@ void async_write(server_conn &sock, int dev_id, int opcode,
   memcpy(&req.arp_write.sender_ip, &sender_ip, sizeof(sender_ip));
   memcpy(&req.arp_write.target_ip, &target_ip, sizeof(target_ip));
 
-  boost::asio::write(sock, boost::asio::buffer(&req, sizeof(req)));
+  boost::asio::write(mgmt::get_conn(), boost::asio::buffer(&req, sizeof(req)));
   mgmt::get_pending_map()[req.id] = std::move(handler);
-  mgmt::wait_response(sock);
+  mgmt::wait_response();
 }
 
-void async_read(server_conn &sock, int dev_id, handler_t &&handler) {
+void async_read(int dev_id, handler_t &&handler) {
   static struct request req;
   static struct response resp;
   req.type = ARP_READ;
@@ -41,9 +40,9 @@ void async_read(server_conn &sock, int dev_id, handler_t &&handler) {
 
   req.arp_read.dev_id = dev_id;
 
-  boost::asio::write(sock, boost::asio::buffer(&req, sizeof(req)));
+  boost::asio::write(mgmt::get_conn(), boost::asio::buffer(&req, sizeof(req)));
   mgmt::get_pending_map()[req.id] = std::move(handler);
-  mgmt::wait_response(sock);
+  mgmt::wait_response();
 }
 } // namespace arp
 } // namespace khtcpc

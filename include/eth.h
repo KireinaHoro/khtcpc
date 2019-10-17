@@ -21,8 +21,7 @@
 namespace khtcpc {
 namespace eth {
 template <typename MutableBufferSequence>
-void async_write(server_conn &sock, int dev_id, uint16_t ethertype,
-                 const struct sockaddr_ll &mac,
+void async_write(int dev_id, uint16_t ethertype, const struct sockaddr_ll &mac,
                  const MutableBufferSequence &payload_buf, handler_t &&handler,
                  check_buffer<MutableBufferSequence> = 0) {
   static struct request req;
@@ -35,13 +34,13 @@ void async_write(server_conn &sock, int dev_id, uint16_t ethertype,
   req.eth_write.ethertype = ethertype;
   memcpy(&req.eth_write.mac, &mac, sizeof(mac));
 
-  boost::asio::write(sock, boost::asio::buffer(&req, sizeof(req)));
-  boost::asio::write(sock, payload_buf);
+  boost::asio::write(mgmt::get_conn(), boost::asio::buffer(&req, sizeof(req)));
+  boost::asio::write(mgmt::get_conn(), payload_buf);
   mgmt::get_pending_map()[req.id] = std::move(handler);
-  mgmt::wait_response(sock);
+  mgmt::wait_response();
 }
 
-void async_read(server_conn &sock, int dev_id, handler_t &&handler);
+void async_read(int dev_id, handler_t &&handler);
 } // namespace eth
 } // namespace khtcpc
 

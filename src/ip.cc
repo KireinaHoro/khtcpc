@@ -2,7 +2,7 @@
 
 namespace khtcpc {
 namespace ip {
-void async_read(server_conn &sock, uint8_t proto, handler_t &&handler) {
+void async_read(uint8_t proto, handler_t &&handler) {
   static struct request req;
   static struct response resp;
   req.type = IP_READ;
@@ -11,9 +11,9 @@ void async_read(server_conn &sock, uint8_t proto, handler_t &&handler) {
 
   req.ip_read.proto = proto;
 
-  boost::asio::write(sock, boost::asio::buffer(&req, sizeof(req)));
+  boost::asio::write(mgmt::get_conn(), boost::asio::buffer(&req, sizeof(req)));
   mgmt::get_pending_map()[req.id] = std::move(handler);
-  mgmt::wait_response(sock);
+  mgmt::wait_response();
 }
 } // namespace ip
 } // namespace khtcpc

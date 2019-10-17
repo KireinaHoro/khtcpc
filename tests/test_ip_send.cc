@@ -44,8 +44,6 @@ int main(int argc, char **argv) {
     return -1;
   }
   boost::asio::io_context ctx;
-  auto conn = khtcpc::mgmt::connect_to_server();
-
   struct sockaddr_in src, dst;
   if (inet_pton(AF_INET, argv[1], &src.sin_addr) != 1) {
     fprintf(stderr, "error: src-addr %s is not a valid IP address.\n", argv[1]);
@@ -58,8 +56,7 @@ int main(int argc, char **argv) {
 
   std::thread t([]() { khtcpc::mgmt::run(); });
   khtcpc::ip::async_write(
-      conn, 17, src, dst, 0, 255,
-      boost::asio::buffer(payload, sizeof(payload) - 1),
+      17, src, dst, 0, 255, boost::asio::buffer(payload, sizeof(payload) - 1),
       [&](const struct khtcpc::response *resp_ptr, const void *payload_ptr) {
         BOOST_ASSERT(!payload_ptr);
         if (resp_ptr->ip_write.ret) {
