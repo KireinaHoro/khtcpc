@@ -50,7 +50,7 @@ int bind(int fd, struct sockaddr_in *addr) {
 }
 
 void async_sendto(int fd, const void *message, size_t length,
-                  struct sockaddr_in *dst, sendto_handler &&handler) {
+                  const struct sockaddr_in *dst, sendto_handler &&handler) {
   auto *req = (struct request *)malloc(sizeof(struct request));
   auto *resp = (struct response *)malloc(sizeof(struct response));
   req->type = SENDTO;
@@ -71,8 +71,7 @@ void async_sendto(int fd, const void *message, size_t length,
                       });
 }
 
-void async_recvfrom(int fd, struct sockaddr_in *src,
-                    recvfrom_handler &&handler) {
+void async_recvfrom(int fd, recvfrom_handler &&handler) {
   auto *req = (struct request *)malloc(sizeof(struct request));
   auto *resp = (struct response *)malloc(sizeof(struct response));
   req->type = RECVFROM;
@@ -80,7 +79,6 @@ void async_recvfrom(int fd, struct sockaddr_in *src,
   req->payload_len = 0;
 
   req->recvfrom.fd = fd;
-  memcpy(&req->recvfrom.src, src, sizeof(struct sockaddr_in));
 
   write(mgmt::get_conn(), buffer(req, sizeof(struct request)));
   mgmt::wait_response(
@@ -88,7 +86,8 @@ void async_recvfrom(int fd, struct sockaddr_in *src,
         BOOST_ASSERT(resp->type == RECVFROM);
         BOOST_ASSERT(resp->id == req->id);
         BOOST_ASSERT(payload_ptr);
-        handler(resp->payload_len, payload_ptr, resp->payload_len);
+        handler(resp->recvfrom.ret, resp->recvfrom.src, payload_ptr,
+                resp->payload_len);
       });
 }
 } // namespace socket
