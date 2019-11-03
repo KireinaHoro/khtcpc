@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     return -1;
   }
   bind_addr.sin_family = AF_INET;
-  bind_addr.sin_port = atoi(argv[2]);
+  bind_addr.sin_port = htons(atoi(argv[2]));
 
   std::thread t([]() { khtcpc::mgmt::run(); });
 

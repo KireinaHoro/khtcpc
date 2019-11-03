@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <iomanip>
 #include <iostream>
 
@@ -37,7 +38,7 @@ int main(int argc, char **argv) {
       return -1;
     }
     src.sin_family = AF_INET;
-    src.sin_port = atoi(argv[4]);
+    src.sin_port = htons(atoi(argv[4]));
   } else if (argc != 3) {
     fprintf(stderr, "usage: %s <dst-ip> <dst-port> [src-ip] [src-port]\n",
             argv[0]);
@@ -48,7 +49,7 @@ int main(int argc, char **argv) {
     return -1;
   }
   dst.sin_family = AF_INET;
-  dst.sin_port = atoi(argv[2]);
+  dst.sin_port = htons(atoi(argv[2]));
 
   std::thread t([]() { khtcpc::mgmt::run(); });
 
