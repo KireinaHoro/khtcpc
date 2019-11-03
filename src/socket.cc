@@ -34,7 +34,7 @@ int close(int fd) {
   return resp.close.ret;
 }
 
-int bind(int fd, struct sockaddr_in *addr) {
+int bind(int fd, const struct sockaddr_in *addr) {
   struct request req;
   struct response resp;
   req.type = BIND;

@@ -28,7 +28,7 @@ using recvfrom_handler =
     std::function<void(ssize_t, struct sockaddr_in, const void *, uint64_t)>;
 int socket(int type);
 int close(int fd);
-int bind(int fd, struct sockaddr_in *addr);
+int bind(int fd, const struct sockaddr_in *addr);
 void async_sendto(int fd, const void *message, size_t length,
                   const struct sockaddr_in *dst, sendto_handler &&handler);
 void async_recvfrom(int fd, recvfrom_handler &&handler);
